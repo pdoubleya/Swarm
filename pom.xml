@@ -113,6 +113,9 @@
                                 <jvmArg>-Xms64m</jvmArg>
                                 <jvmArg>-Xmx512m</jvmArg>
                             </jvmArgs>
+                            <args>
+                                <arg>-Xprint:selectivecps</arg>
+                            </args>
                         </configuration>
                     </execution>
                 </executions>
@@ -134,35 +137,38 @@
     <profiles>
         <profile>
             <id>javaspaces</id>
+            <properties>
+                <jini.version>2.1</jini.version>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>net.jini</groupId>
                     <artifactId>jsk-lib</artifactId>
-                    <version>2.1</version>
+                    <version>${jini.version}</version>
                     <type>jar</type>
                 </dependency>
                 <dependency>
                     <groupId>net.jini</groupId>
                     <artifactId>jsk-platform</artifactId>
-                    <version>2.1</version>
+                    <version>${jini.version}</version>
                     <type>jar</type>
                 </dependency>
                 <dependency>
                     <groupId>net.jini</groupId>
                     <artifactId>jsk-resources</artifactId>
-                    <version>2.1</version>
+                    <version>${jini.version}</version>
                     <type>jar</type>
                 </dependency>
                 <dependency>
                     <groupId>com.sun.jini</groupId>
                     <artifactId>outrigger</artifactId>
-                    <version>2.1</version>
+                    <version>${jini.version}</version>
                     <type>jar</type>
                 </dependency>
                 <dependency>
                     <groupId>com.sun.jini</groupId>
                     <artifactId>reggie-dl</artifactId>
-                    <version>2.1</version>
+                    <version>${jini.version}</version>
                     <type>jar</type>
                 </dependency>
             </dependencies>
@@ -194,7 +200,6 @@
                             </systemProperties>
                         </configuration>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>

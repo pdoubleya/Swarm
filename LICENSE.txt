@@ -1,0 +1,17 @@
+License Information for Swarm
+-----------------------------
+Last updated October 15, 2009
+
+License for the Swarm Codebase
+------------------------------
+Swarm is free and open-source software, distributed under the terms of the GNU Lesser General Public License; see http://www.gnu.org/licenses/lgpl.html.
+
+
+Licenses for 3rd-party Software
+-------------------------------
+Swarm is distributed along with code from other open-source projects. This 3rd-party code may be distributed along with Swarm itself in one or another archive format (e.g. Java JAR file, ZIP format), it may be downloaded by the Maven build tool, or the you may decide to download it yourself and have it referenced on your system when using the shell scripts build.sh and run.sh. 
+
+Jini/JavaSpaces Libraries
+Apache License, Version 2.0
+http://www.apache.org/licenses/LICENSE-2.0.html
+We are using a subset of the Jini SDK libaries; see <project home>/lib/jini/**/*.jar
