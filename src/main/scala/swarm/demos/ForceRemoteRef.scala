@@ -4,8 +4,9 @@ import swarm._;
 import swarm.Swarm._;
 
 object ForceRemoteRef {
+  val serverName = "Sender"
 	def main(args : Array[String]) = {
-		Swarm.listen("Sender", java.lang.Short.parseShort(args(0)))
+		Swarm.listen(serverName, java.lang.Short.parseShort(args(0)))
 		if (args.length > 1 && args(1) == "start") {
 			Swarm.spawn(frrThread);
 		}
@@ -22,7 +23,7 @@ object ForceRemoteRef {
 		
 		println("2");
 			
-		val vRem = Ref(localUuid, "test remote string");
+		val vRem = Ref(Listen.serverName, "test remote string");
 		
 		println("3");
 			

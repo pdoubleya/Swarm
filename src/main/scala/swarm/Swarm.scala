@@ -119,7 +119,7 @@ object Swarm {
   def lookup(serverId:String) : ServerLocation = {
     val space = JiniUtil.getSpaceSDM()
     val tmpl = new ServerIdentifier()
-    tmpl.serverId = serverId
+    tmpl.serverName = serverId
     val sid = space.read(tmpl, null, 0).asInstanceOf[ServerIdentifier]
     if (sid == null) {
       throw new RuntimeException(format("Cannot locate server %s in a Space", serverId))

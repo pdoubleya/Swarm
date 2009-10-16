@@ -14,9 +14,9 @@ import scala.actors.remote._
  returning the object.
  **/
 //@serializable class Ref[Type](val typeClass : Class[Type], val location : Location, val uid : Long) {
-@serializable class Ref[Type](val typeClass : Class[Type], val uuid : Uuid, val uid : Long) {
+@serializable class Ref[Type](val typeClass : Class[Type], val sloc : ServerLocation, val uid : Long) {
   def apply() = {
-		Swarm.moveTo(uuid);
+		Swarm.moveTo(sloc);
 		Store(typeClass, uid) match {
 			case Some(v) => v
 			case None => throw new RuntimeException("Unable to find item with uid "+uid+" in local store");
@@ -26,7 +26,7 @@ import scala.actors.remote._
 
 object Ref {
 	def apply[Type](value : AnyRef) : Ref[Type] @swarm = {
-		apply(Swarm.localUuid, value);
+		apply(Swarm.localIdentifier.serverName, value);
 	}
 	
 /*
@@ -37,10 +37,11 @@ object Ref {
 	}
 */
 
-	def apply[Type](uuid : Uuid, value : AnyRef) : Ref[Type] @swarm = {
-		Swarm.moveTo(uuid);
+	def apply[Type](serverName : String, value : AnyRef) : Ref[Type] @swarm = {
+    val sloc: ServerLocation = Swarm.lookup(serverName)
+    Swarm.moveTo(sloc);
 		val uid = Store.save(value);
-		new Ref[Type](value.getClass().asInstanceOf[Class[Type]], uuid, uid);
+		new Ref[Type](value.getClass().asInstanceOf[Class[Type]], sloc, uid);
 	}
 
 	def unapply[Type](ref : Ref[Type]) = {
