@@ -37,7 +37,7 @@ object Swarm {
     logger.info("{}: {}", localUuid, message)
   }
 
-  def listen(serverId : String, port: Short) = {
+  def listen(serverId : String) = {
     val space = JiniUtil.getSpaceSDM()
     localIdentifier = JiniUtil.register(serverId, localUuid)
     var listenThreadSpace = new Thread() {

@@ -9,23 +9,62 @@ please visit GoogleCode_.
 
 About this fork:
 
-Jini and Javaspaces: I'm working on using Jini and JavaSpaces infrastructure to move the Swarm continuations around. 
-An early smoke-test worked, and I'm in the middle of setting up clean up the start/stop scripts for the 
-Jini/JavaSpaces servers you need to have running.
+Jini and JavaSpaces: I'm working on using Jini and JavaSpaces infrastructure to move the Swarm continuations around. These experiments are against Jini 2.1. Note that JavaSpaces is delivered as a part of the Jini project, although conceptually JS just relies on Jini for things like lookup.
 
-The scripts are written for, and tested on, a UNIX-based system (tested on Ubuntu, actually).
+Quick Overview
+==============
+My current approach is to move continuations between servers asynchronously. When a server wants to move a continuation somewhere, it identifies the target server using a logical identifier (currently a string). The Swarm object looks first for a JavaSpace instance on the network, then looks for the target server's unique identifier (UUID) in the space. It then posts the serialized continuation in the space using the target server's name and UUID as a sort of key. On the receiving end, the target server is polling for new entries in the space marked with its identifier. It then downloads any it finds and executes them.
+
+In this design, the sender could operate even if the receiver was offline; the receiver, on starting up, would find waiting entries, pull them down, and execute them.
+
+A JavaSpace in this case is a server (there is a reference implementation as part of the Jini SDK, called Outrigger) which is a sort of electronic bulletin board that is network accessible. In the demo, the space is transient and does not persist entries, though that can be configured as well. There are space implementations that can replicate as well, and you can have more than one space running at a time, to handle failover, etc.
+
+Servers that want to find and retrieve entries from a space can work in several different modes
+- poll with no timeout
+- poll with timeout
+- blocking poll
+- asynchronous notification
+
+Currently, I'm using a poll with timeout, which gives me some debugging information (e.g. something is happening).
+
+
+Starting the Jini/JavaSpaces Services
+=====================================
+
+The start and stop scripts are written for, and tested on, a UNIX-based system (tested on Ubuntu, actually). To launch the services, use
 bin/jini-start.sh
 
 will start the three main Jini servers we need: Reggie (lookup service, e.g. a registry of services), Outrigger
 (the JavaSpaces implementation) and Mahalo (distributed transaction manager).
 
-bin/jini-kill.sh
+bin/jini-stop.sh
 
 will stop the servers, using PIDs recorded by the start scripts.
 
 Per-server logs, and the PIDs, are written to /tmp.
 
-The Swarm code hasn't been updated to use either JavaSpaces or Jini. Now I have the servers running, I'll work on 
-moving my demo code in.
-
 Note on security: it's possible to tighten the screws on Jini servers and clients, but I haven't done so yet. 
+
+
+Running the Demos
+=================
+Once the servers are started, you can launch the demos as usual. I'm using Maven for this; the run.sh script hasn't been updated to include the correct classpath.
+
+First, compile cleanly
+mvn -o clean compile
+
+Launch a generic listener
+mvn -o -q exec:java -Dexec.mainClass="swarm.demos.Listen"
+
+where -o means Maven won't look for JAR updates online, and -q means Maven should just shut up. Note that in the original demos, the listener and the sender demos required a port parameter; this is no longer used.
+
+Launch a sender, one of
+mvn -o -q exec:java -Dexec.mainClass="swarm.demos.ForceRemoteRef" -Dexec.args="start"
+
+or
+mvn -o -q exec:java -Dexec.mainClass="swarm.demos.ExplicitMoveTo1" -Dexec.args="start"
+
+
+NOTE: I haven't yet added any graceful cleanup when the demos are done, nor have I coded the Swarm processes to react gracefully when the Jini services are shut down. You should stop/start the servers between each demo run until I have fixed that.
+
+

@@ -7,9 +7,9 @@ import Integer._;
 
 object ExplicitMoveTo1 {
 	def main(args : Array[String]) = {		
-		Swarm.listen("Sender", java.lang.Short.parseShort(args(0)))
+		Swarm.listen("Sender")
 
-		if (args.length > 1 && args(1) == "start") {
+		if (args.length > 0 && args(0) == "start") {
 			Swarm.spawn(emt1Thread);
 		}
 

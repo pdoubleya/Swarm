@@ -1,13 +1,13 @@
 package swarm.demos;
 
 import swarm._;
-import swarm.Swarm._;
+
 
 object ForceRemoteRef {
   val serverName = "Sender"
 	def main(args : Array[String]) = {
-		Swarm.listen(serverName, java.lang.Short.parseShort(args(0)))
-		if (args.length > 1 && args(1) == "start") {
+		Swarm.listen(serverName)
+		if (args.length > 0 && args(0) == "start") {
 			Swarm.spawn(frrThread);
 		}
 		while(true) {
