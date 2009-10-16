@@ -68,3 +68,13 @@ mvn -o -q exec:java -Dexec.mainClass="swarm.demos.ExplicitMoveTo1" -Dexec.args="
 NOTE: I haven't yet added any graceful cleanup when the demos are done, nor have I coded the Swarm processes to react gracefully when the Jini services are shut down. You should stop/start the servers between each demo run until I have fixed that.
 
 
+Future
+======
+There is a lot to look into.
+
+- synchronous sends: the original Swarm demos worked on the basis of a synchronous calls between servers. In the Jini world, that would be a Jini interface. It's easy to set up given the infrastructure, but it raises a problem when the sender needs to send and the receiver isn't available. It also forces the receiver to receive synchronously but process asynchronously. Anyway, I want to play around with the spaces a bit, will get back to the synchronous case shortly.
+
+- pick your target: a sender needs to know where to go next, e.g. what the target server is. In the demos, we don't have any infrastructure to map data to a server, so the demos have the target addresses hard-coded. Coming up with a logical scheme to identify servers would be a next step.
+
+- specifying intention: what I want to play with is that a sender has an intention, e.g. wants to work on some data, and should act on the intention. In a classical spaces design, they would post an entry saying "I need to work on data X" and a server who had data X available would pull the entry down and execute it.
+
