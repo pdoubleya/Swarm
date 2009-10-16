@@ -3,7 +3,7 @@ if [ ! -d target/classes ]
 then
   mkdir -p target/classes
 fi
-scalac -cp $SCALA_C_DIR/build/pack/selectivecps-library.jar \
+scalac -verbose -cp $SCALA_C_DIR/build/pack/selectivecps-library.jar \
 	-unchecked \
        -Xpluginsdir $SCALA_C_DIR/build/pack \
        -sourcepath src/main/scala -d target/classes \
