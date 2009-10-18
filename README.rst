@@ -1,15 +1,13 @@
 Swarm
 =====
 
-This is a _fork_ of Swarm. Don't expect any of this to work. You may find the Swarm source code at
-http://github.com/sanity/Swarm. For the project's homepage please visit GoogleCode_.
-
-.. _GoogleCode: http://code.google.com/p/swarm-dpl
+This is a *fork* of Swarm. Don't expect any of this to work. You can find the Swarm source code at
+http://github.com/sanity/Swarm, or visit `the project's homepage on Google Code <http://code.google.com/p/swarm-dpl>_.
 
 
 About this fork:
 
-Jini and JavaSpaces: I'm working on using Jini and JavaSpaces infrastructure to move the Swarm
+*Jini and JavaSpaces*: I'm working on using Jini and JavaSpaces infrastructure to move the Swarm
 continuations around. These experiments are against Jini 2.1. Note that JavaSpaces is delivered
 as a part of the Jini project, although conceptually JS just relies on Jini for things like lookup.
 
