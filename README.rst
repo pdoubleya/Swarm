@@ -11,7 +11,7 @@ About this fork:
 
 Jini and JavaSpaces: I'm working on using Jini and JavaSpaces infrastructure to move the Swarm
 continuations around. These experiments are against Jini 2.1. Note that JavaSpaces is delivered
- as a part of the Jini project, although conceptually JS just relies on Jini for things like lookup.
+as a part of the Jini project, although conceptually JS just relies on Jini for things like lookup.
 
 Quick Overview
 --------------
@@ -20,17 +20,17 @@ to move a continuation somewhere, it identifies the target server using a logica
 (currently a string). The Swarm object looks first for a JavaSpace instance on the network,
 then looks for the target server's unique identifier (UUID) in the space. It then posts the
 serialized continuation in the space using the target server's name and UUID as a sort of key.
- On the receiving end, the target server is polling for new entries in the space marked with
- its identifier. It then downloads any it finds and executes them.
+On the receiving end, the target server is polling for new entries in the space marked with
+its identifier. It then downloads any it finds and executes them.
 
 In this design, the sender could operate even if the receiver was offline; the receiver, on
 starting up, would find waiting entries, pull them down, and execute them.
 
 A JavaSpace in this case is a server (there is a reference implementation as part of the Jini SDK,
- called Outrigger) which is a sort of electronic bulletin board that is network accessible. In the
- demo, the space is transient and does not persist entries, though that can be configured as well.
- There are space implementations that can replicate as well, and you can have more than one space
- running at a time, to handle failover, etc.
+called Outrigger) which is a sort of electronic bulletin board that is network accessible. In the
+demo, the space is transient and does not persist entries, though that can be configured as well.
+There are space implementations that can replicate as well, and you can have more than one space
+running at a time, to handle failover, etc.
 
 Servers that want to find and retrieve entries from a space can work in several different modes
 
