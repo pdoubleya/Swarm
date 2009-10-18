@@ -2,7 +2,7 @@ Swarm
 =====
 
 This is a *fork* of Swarm. Don't expect any of this to work. You can find the Swarm source code at
-http://github.com/sanity/Swarm, or visit `the project's homepage on Google Code <http://code.google.com/p/swarm-dpl>_.
+http://github.com/sanity/Swarm, or visit `the project's homepage on Google Code <http://code.google.com/p/swarm-dpl>`_.
 
 
 About this fork:
