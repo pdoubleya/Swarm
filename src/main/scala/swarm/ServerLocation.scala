@@ -1,9 +1,9 @@
 package swarm
 
-@serializable class ServerLocation(val serverId : ServerIdentifier) {
+@serializable class ServerLocation(val serverId : NodeIdentifier) {
 	override def equals(other : Any) = {
 		if (!other.isInstanceOf[Any]) false;
-		val o = other.asInstanceOf[ServerIdentifier];
+		val o = other.asInstanceOf[NodeIdentifier];
 		this == o;
 	}
 

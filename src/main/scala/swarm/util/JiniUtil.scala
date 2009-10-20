@@ -20,17 +20,15 @@ object JiniUtil {
   var sdm: ServiceDiscoveryManager = null
   var lookupCache: LookupCache = null
 
-  def register(serverId : String, localUuid : Uuid) : ServerIdentifier = {
-    val identifier: ServerIdentifier = new ServerIdentifier(serverId, localUuid)
+  def registerNode(serverName : String) : NodeIdentifier = {
+    val identifier: NodeIdentifier = NodeIdentifier.newIdentifier(serverName)
     getSpaceSDM().write(identifier, null, Lease.FOREVER);
     identifier
   }
 
 
   def getSpace(): JavaSpace05 = {
-    println("NO SECURITY MANAGER!")
     try {
-
       val reg: ServiceRegistrar = new LookupLocator(lusHost).getRegistrar()
       val space = reg.lookup(new ServiceTemplate(null, Array(classOf[JavaSpace05]), null)).asInstanceOf[JavaSpace05]
       if (space == null) throw new RuntimeException("not found")

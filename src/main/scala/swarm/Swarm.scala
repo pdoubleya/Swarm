@@ -2,83 +2,94 @@ package swarm
 
 import scala.continuations._
 import scala.continuations.ControlContext._
-import scala.continuations.Loops._
-
 import org.slf4j.Logger
-import net.jini.id.{Uuid, UuidFactory}
+import net.jini.id.{Uuid}
 import net.jini.core.lease.Lease
-import net.jini.space.JavaSpace05;
-import org.slf4j.LoggerFactory;
 
-import java.net._
-import java.io._
+import org.slf4j.LoggerFactory
+import net.jini.core.event.{RemoteEvent, RemoteEventListener}
+import net.jini.core.transaction.Transaction
+import net.jini.space.JavaSpace05
+
 
 object Swarm {
   val logger: Logger = LoggerFactory.getLogger("swarm.Swarm")
   type swarm = cps[Bee, Bee];
 
-  var myLocation: Location = null
+  var localIdentifier: NodeIdentifier = null
 
-  var localUuid = UuidFactory.generate()
+  def isLocal(uuid: Uuid) = {uuid.equals(localIdentifier.uuid)}
 
-  var localIdentifier : ServerIdentifier = null
+  def inform(message: String) = {logger.info("{}: {}", localIdentifier.uuid, message)}
 
-  var shouldLog = true;
+  def warn(message: String) = {logger.warn("{}: {}", localIdentifier.uuid, message)}
 
-  def isLocal(loc: Location) = {
-    loc.equals(myLocation);
-  }
-
-  def isLocal(uuid: Uuid) = {
-    uuid.equals(localUuid);
-  }
-
-  def log(message: String) = {
-    logger.info("{}: {}", localUuid, message)
-  }
-
-  def listen(serverId : String) = {
+  def listen(serverName: String) = {
     val space = JiniUtil.getSpaceSDM()
-    localIdentifier = JiniUtil.register(serverId, localUuid)
-    var listenThreadSpace = new Thread() {
+    localIdentifier = JiniUtil.registerNode(serverName)
+
+    val operationListener = new Thread() {
       override def run() = {
         while (true) {
           try {
-            val tmpl = new NewBee(format("swarm(%s)", localIdentifier))
-            log(format("Waiting for entries in Space using template: %s", tmpl));
-            val bee: NewBee = space.take(tmpl, null, 10 * 1000).asInstanceOf[NewBee]
-            if (bee == null) {
-              log("nothing found; sleeping")
+            val waitMs: Int = 5 * 1000
+            val trn: Transaction = null
+            val tmpl = TaskEntry.templateForTargetNode(localIdentifier)
+            inform(format("Waiting for entries in Space using template: %s", tmpl));
+            val taskEntry = space.take(tmpl, trn, waitMs).asInstanceOf[TaskEntry]
+            if (taskEntry == null) {
+              inform("nothing found; sleeping")
               Thread.sleep(1000)
             } else {
-              log(format("READ: Got bee %s from Space; executing continuation", bee));
+              inform(format("READ: Got task %s from Space; executing continuation", taskEntry));
+              taskEntry match {
+                case toe: TaskOperationEntry =>
+                  inform(toe.toString)
+                  if (toe.operation == null) {
+                    warn("hmm, task is null, serialization problem? : " + toe)
+                  } else {
+                    var task = toe.operation.asInstanceOf[(Unit => Bee)]
+                    try {
+                      Swarm.run((Unit) => shiftUnit(task()))
+                    }
+                    catch {
+                      case ex: Exception => handleFailedTask(space, toe, ex)
+                    }
+                  }
 
-              if (bee.task == null) {
-                log("hmm, task is null: " + bee)
-              } else {
-                var task: (Unit => Bee) = bee.task.asInstanceOf[(Unit => Bee)]
-                Swarm.run((Unit) => shiftUnit(task()))
+                case f: TaskResultEntry[AnyRef] => inform(f.toString)
+                case g: TaskErrorEntry => inform(g.toString)
               }
+
             }
           }
           catch {
-            case e => e.printStackTrace()
+            case e => warn("Exception in task processing: " + e.getMessage())
           }
         }
       }
     }
 
-    listenThreadSpace.start();
+
+    operationListener.start();
     Thread.sleep(500);
   }
 
+  def setupNotify(nodeId: NodeIdentifier): Unit = {
+    JiniUtil.getSpace().notify(TemplateTaskEntry.newForTargetNode(nodeId), null, null/*newNotifyListener()*/, Lease.FOREVER, null)
+  }
+
+  def handleFailedTask(space: JavaSpace05, taskEntry: TaskOperationEntry, e: Exception) {
+    var errorEntry: TaskErrorEntry = TaskErrorEntry.newForException(taskEntry, e)
+    space.write(errorEntry, null, Lease.FOREVER)
+    warn(format("Unexpected exception in processing task %s, %s", taskEntry, e.getMessage()))
+    warn(format("Wrote task for exception %s", errorEntry))
+  }
 
   def run(toRun: Unit => Bee@swarm) = {
     execute(reset {
-      log("Running task");
+      inform("Running task");
       toRun();
-      //			log("Completed task");
-      //			NoBee()
     })
   }
 
@@ -90,9 +101,9 @@ object Swarm {
     val thread = new Thread() {
       override def run() = {
         execute(reset {
-          log("Running task");
+          inform("Running task");
           toRun();
-          log("Completed task");
+          inform("Completed task");
           NoBee()
         })
       }
@@ -100,116 +111,49 @@ object Swarm {
     thread.start();
   }
 
-/*
-  def moveTo(location: Location) = shift {
-    c: (Unit => Bee) => {
-      log("Move to")
-      if (Swarm.isLocal(location)) {
-        log("Is local")
-        c()
-        //				NoBee()
-      } else {
-        log("Moving task to " + location.port);
-        IsBee(c, location)
-      }
-    }
-  }
-*/
-
-  def lookup(serverId:String) : ServerLocation = {
+  def lookup(serverId: String): ServerLocation = {
     val space = JiniUtil.getSpaceSDM()
-    val tmpl = new ServerIdentifier()
+    val tmpl = new NodeIdentifier()
     tmpl.serverName = serverId
-    val sid = space.read(tmpl, null, 0).asInstanceOf[ServerIdentifier]
+    val sid = space.read(tmpl, null, 0).asInstanceOf[NodeIdentifier]
     if (sid == null) {
       throw new RuntimeException(format("Cannot locate server %s in a Space", serverId))
     }
-    log(format("found server %s at %s", serverId, sid))
-    new ServerLocation(sid)  
+    inform(format("found server %s at %s", serverId, sid))
+    new ServerLocation(sid)
   }
 
 
   def moveTo(uuid: Uuid) = shift {
     c: (Unit => Bee) => {
-      log("Move to")
+      inform("Move to")
       if (Swarm.isLocal(uuid)) {
-        log("Is local")
+        inform("Is local")
         c()
-        //				NoBee()
       } else {
-        log("Moving task to " + uuid);
-        IsBee(c, null)
+        inform("Moving task to " + uuid);
+        IsBee(c, new NodeIdentifier(uuid))
       }
     }
   }
 
-  def moveTo(sloc : ServerLocation) = shift {
-    val uuid = sloc.serverId.uuid
-    c: (Unit => Bee) => {
-      log("Move to")
-      if (Swarm.isLocal(uuid)) {
-        log("Is local")
-        c()
-        //				NoBee()
-      } else {
-        log("Moving task to " + sloc);
-        IsBee(c, sloc.serverId)
-      }
-    }
-  }
 
   def execute(bee: Bee) = {
     bee match {
-/*
-      case IsBee(contFunc, location) => {
-        space = JiniUtil.getSpaceSDM()
-        val bee = new NewBee(format("swarm(%s:%s)", location.address, location.port))
-        log(format("writing entry %s into space", bee))
-        bee.task = contFunc
-        try {
-          val lb = space.write(bee, null, Lease.FOREVER)
-          log(format("wrote entries %s into space", bee))
-        }
-        catch {
-          case e => e.printStackTrace()
-        }
-
-        /*
-        val bee = new SpaceBee(format("swarm(%s:%s)", location.address, location.port), null)
-
-        log("Transmitting task to " + location.port);
-        val skt = new Socket(location.address, location.port);
-        val oos = new ObjectOutputStream(skt.getOutputStream());
-        oos.writeObject(contFunc);
-        oos.close();
-        log("Transmission complete");*/
-      }
-*/
-      case IsBee(contFunc, serverId) => {
+      case IsBee(contFunc, nodeId) => {
         val space = JiniUtil.getSpaceSDM()
-        val bee = new NewBee(format("swarm(%s)", serverId))
-        log(format("writing entry %s into space", bee))
-        bee.task = contFunc
+        val toe = TaskOperationEntry.newOperation(localIdentifier, nodeId, contFunc)
+        inform(format("writing entry %s into space", toe))
         try {
-          val lb = space.write(bee, null, Lease.FOREVER)
-          log(format("wrote entries %s into space", bee))
+          val lb = space.write(toe, null, Lease.FOREVER)
+          inform(format("wrote entries %s into space", toe))
         }
         catch {
           case e => e.printStackTrace()
         }
-
-        /*
-        val bee = new SpaceBee(format("swarm(%s:%s)", location.address, location.port), null)
-
-        log("Transmitting task to " + location.port);
-        val skt = new Socket(location.address, location.port);
-        val oos = new ObjectOutputStream(skt.getOutputStream());
-        oos.writeObject(contFunc);
-        oos.close();
-        log("Transmission complete");*/
       }
       case NoBee() => {
-        log("No more continuations to execute");
+        inform("No more continuations to execute");
       }
     }
   }
