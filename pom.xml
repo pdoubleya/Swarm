@@ -61,19 +61,6 @@
             <version>${jini.version}</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>com.sun.jini</groupId>
-            <artifactId>outrigger</artifactId>
-            <version>${jini.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.jini</groupId>
-            <artifactId>reggie-dl</artifactId>
-            <version>${jini.version}</version>
-            <type>jar</type>
-        </dependency>
-
     </dependencies>
     <repositories>
         <repository>
