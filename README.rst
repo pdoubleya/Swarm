@@ -1,3 +1,7 @@
+*Note:* This code is currently unstable. My goal is to make it compatible with Scala 2.8 final, which means (at a
+minimum) reviewing the changes to continuations between the version this was written against (2.7 - something) and
+2.8 final.
+
 Swarm
 =====
 
