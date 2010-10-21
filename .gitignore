@@ -6,3 +6,7 @@ target/
 .idea/
 target.timestamp
 *~
+src_managed/
+project/boot/
+project/plugins/project/
+lib_managed/

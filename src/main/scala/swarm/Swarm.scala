@@ -1,10 +1,8 @@
 package swarm
 
-import scala.continuations._
-import scala.continuations.ControlContext._
-import org.slf4j.Logger
-import net.jini.id.{Uuid}
-import net.jini.core.lease.Lease
+import scala.util.continuations._ 
+//import scala.util.continuations.ControlContext._ 
+//import scala.util.continuations.Loops._
 
 import org.slf4j.LoggerFactory
 import net.jini.core.event.{RemoteEvent, RemoteEventListener}
@@ -13,8 +11,15 @@ import net.jini.space.JavaSpace05
 
 
 object Swarm {
-  val logger: Logger = LoggerFactory.getLogger("swarm.Swarm")
-  type swarm = cps[Bee, Bee];
+	type swarm = cpsParam[Bee, Bee];
+	
+	var myLocation : Location = null;
+	
+	var shouldLog = true;
+	
+	def isLocal(loc : Location) = {
+		loc.equals(myLocation);
+	}
 
   var localIdentifier: NodeIdentifier = null
 
